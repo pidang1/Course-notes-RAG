@@ -48,26 +48,26 @@ def searchConfig():
     }
     # Options to choose for DB
     databaseOptions = {
-        "A": "Option A",
-        "B": "Option B",
-        "C": "Option C"
+        "redis": "Redis Vector DB",
+        "chroma": "Chroma",
+        "pinecone": "Pinecone"
     }
     
     print("\nPlease select a model for embedding:")
     for option in embeddingModelOptions:
-        print(f"{option}) Option {option}")  
+        print(f"{option}: {embeddingModelOptions[option]}")  
     embeddingModel = input("\nYour choice: ").strip().upper()
     
     
     print("\nPlease select a model for LLM:")
     for option in llmModelOptions:
-        print(f"{option}) Option {option}")
+        print(f"{option}: {llmModelOptions[option]}")
     llmModel = input("\nYour choice: ").strip().upper()
     
     
     print("\nPlease select a database:")
     for option in databaseOptions:
-        print(f"{option}) Option {option}")
+        print(f"{option}: {databaseOptions[option]}")
     db = input("\nYour choice: ").strip().upper()
     return [embeddingModel, llmModel, db]
 
