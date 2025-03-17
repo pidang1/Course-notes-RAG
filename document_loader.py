@@ -64,4 +64,8 @@ def test_document_loader():
         processed_text = preprocess_text(all_text)
         processing_time = time.time() - start_time
         
-       
+        # count words in  processed text
+        lines = processed_text.split("\n")
+        word_count = len(lines)
+
+        
