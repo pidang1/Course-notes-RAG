@@ -45,7 +45,6 @@ def test_document_loader():
     pdf_directory = "C:\\Users\\pierr\\Documents\\ds4300notes"
     documents = load_documents(pdf_directory)
     
-    # Process a sample document to verify preprocessing
     if documents:
         # only gets first documents
         filename = list(documents.keys())[0]
@@ -68,4 +67,15 @@ def test_document_loader():
         lines = processed_text.split("\n")
         word_count = len(lines)
 
+        print(f"Document: {filename}")
+        print(f"Pages processed: {len(pages)}")
+        print(f"# Words in document: {word_count}")
+        print(f"Processing time: {processing_time:.2f} seconds")
         
+        # prints all words
+        print("\n=== PROCESSED TEXT ===")
+        print(processed_text)
+        print("\nPreprocessing successful!")
+
+if __name__ == "__main__":
+    test_document_loader()
