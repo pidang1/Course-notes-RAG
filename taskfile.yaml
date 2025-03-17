@@ -4,10 +4,4 @@ tasks:
   redis:
     summary: Runs the experiement with redis vector DB as our storage
     cmds:
-      - python3 main.py --redis
-  env:
-    summary: start the environment
-    cmds:
-      - python -m venv venv
-      - venv\Scripts\activate
-      - pip install -r requirements.txt
+      - python main.py --redis
