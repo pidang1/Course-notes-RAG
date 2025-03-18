@@ -5,7 +5,7 @@ For this project, we'll be using the following technologies for our architecture
 | Component | Technologies |
 |------------|---------|
 | Language | Python |
-| Large Language Models | Llama 2 7B, Mistral 7B  |
+| Large Language Models | Llama 3.2, Mistral 7B  |
 | Offline inferences/llm hosting | Ollama |
 | Vector Database | Redis Vector DB, Chroma, Pinecone |
 | Embedding models | sentence transformers/all-MiniLM-L6-v2, nomic-embed-text and InstructorXL |
