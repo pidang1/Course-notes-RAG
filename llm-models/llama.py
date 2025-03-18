@@ -1,7 +1,11 @@
 import ollama
 
-class Llama:
-    def __init__(self, model_name="llama3.2"):
+llama = "llama3.2"
+mistral = "mistral"
+
+# Class to generate responses using the given LLM model via Ollama
+class LLM:
+    def __init__(self, model_name):
         self.model_name = model_name
     
     # Generate response for the given prompt and return the response output
@@ -12,6 +16,8 @@ class Llama:
         except Exception as e:
             return f"Error generating response: {e}"
 
-# Example usage
-llama = Llama()
+llama = LLM(llama)
 print(llama.generate_response("Hello! Please give a quick summary about RAG search architecture.")) 
+
+mistral = LLM(mistral)
+print(mistral.generate_response("Hello! Please give a quick summary about RAG search architecture."))
