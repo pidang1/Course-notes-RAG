@@ -34,3 +34,6 @@ pip install -r requirements.txt
 ```
 ollama run llama3.2
 ```
+```
+ollama run mistral
+```
