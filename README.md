@@ -29,3 +29,8 @@ venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
+
+4. Ensure you have Ollama installed and both LLM models pulled (llama 3.2 and mistral). To pull the models, run the following on your command line:
+```
+ollama run llama3.2
+```
