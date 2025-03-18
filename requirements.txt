@@ -4,3 +4,4 @@ chromadb
 transformers
 logging
 langchain-community
+pypdf

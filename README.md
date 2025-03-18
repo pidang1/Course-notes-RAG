@@ -1,6 +1,15 @@
 # Course-notes-RAG
 A RAG architecture for my course notes. We reccomend using Anaconda Powershell for the following steps.
 
+For this project, we'll be using the following technologies for our architecture.
+| Component | Technologies |
+|------------|---------|
+| Language | Python |
+| Large Language Models | Llama 2 7B, Mistral 7B  |
+| Offline inferences/llm hosting | Ollama |
+| Vector Database | Redis Vector DB, Chroma, Pinecone |
+| Embedding models | sentence transformers/all-MiniLM-L6-v2, nomic-embed-text and InstructorXL |
+
 1. if this is your first time running the project, make sure to run: 
 ```bash
 python -m venv venv

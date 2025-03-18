@@ -40,7 +40,7 @@ def preprocess_text(text: str) -> str:
     one_word_per_line = "\n".join(words)
     return one_word_per_line
 
-path = "C:\\Users\\pierr\\Documents\\ds4300notes"
+path = "C:\\Users\\daoho\\Downloads\\DS4300-notes"
 
 def test_document_loader(pdf_directory):
     #test and load documents from a specified directory
