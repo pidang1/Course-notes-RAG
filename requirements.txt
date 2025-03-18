@@ -3,3 +3,4 @@ redis
 chromadb
 transformers
 logging
+langchain-community

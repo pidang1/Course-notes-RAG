@@ -40,9 +40,10 @@ def preprocess_text(text: str) -> str:
     one_word_per_line = "\n".join(words)
     return one_word_per_line
 
-def test_document_loader():
+path = "C:\\Users\\pierr\\Documents\\ds4300notes"
+
+def test_document_loader(pdf_directory):
     #test and load documents from a specified directory
-    pdf_directory = "C:\\Users\\pierr\\Documents\\ds4300notes"
     documents = load_documents(pdf_directory)
     
     if documents:
@@ -78,4 +79,4 @@ def test_document_loader():
         print("\nPreprocessing successful!")
 
 if __name__ == "__main__":
-    test_document_loader()
+    test_document_loader(path)
