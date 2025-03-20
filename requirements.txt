@@ -6,3 +6,4 @@ logging
 langchain-community
 pypdf
 ollama
+sentence-transformers
