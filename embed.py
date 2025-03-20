@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import List
+# pip install nomic
 
 class MPNetEmbedder:
     """A simple class that embeds text using the sentence-transformers/all-mpnet-base-v2 model"""
