@@ -15,9 +15,3 @@ class LLM:
             return response["message"]["content"]
         except Exception as e:
             return f"Error generating response: {e}"
-
-llama = LLM(llama)
-print(llama.generate_response("Hello! Please give a quick summary about RAG search architecture.")) 
-
-mistral = LLM(mistral)
-print(mistral.generate_response("Hello! Please give a quick summary about RAG search architecture."))
