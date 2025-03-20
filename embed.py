@@ -1,7 +1,10 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import List
+from InstructorEmbedding import INSTRUCTOR
+from nomic.embed import EmbeddingModel
 # pip install nomic
+# pip install InstructorEmbedding
 
 class MPNetEmbedder:
     """A simple class that embeds text using the sentence-transformers/all-mpnet-base-v2 model"""
@@ -59,7 +62,6 @@ class NomicEmbedder:
     def __init__(self):
         """Initialize the embedder with the nomic-embed-text model"""
         print("Loading nomic-embed-text embedding model...")
-        from nomic.embed import EmbeddingModel
         self.model = EmbeddingModel()
         # Get embedding dimension by testing with a sample text
         sample_embedding = self.model.embed(["Sample text"])
@@ -73,6 +75,35 @@ class NomicEmbedder:
             return []
         # Use the model to encode the chunks
         embeddings = self.model.embed(chunks)
+        return embeddings
+    
+    # Function to get the embedding dimension
+    def get_embedding_dimension(self) -> int:
+        return self.embedding_dim
+
+
+class InstructorEmbedder:
+    """A simple class that embeds text using the InstructorXL model"""
+    
+    def __init__(self):
+        """Initialize the embedder with the InstructorXL model"""
+        print("Loading InstructorXL embedding model...")
+        self.model = INSTRUCTOR('hkunlp/instructor-xl')
+        self.instruction = "Represent the text for retrieval from course notes:"
+        # Get embedding dimension by testing with a sample text
+        sample_embedding = self.model.encode([[self.instruction, "Sample text"]])
+        self.embedding_dim = sample_embedding.shape[1]
+        print(f"Model loaded successfully with embedding dimension: {self.embedding_dim}")
+        
+    # Embed a list of text chunks
+    def embed_chunks(self, chunks: List[str]) -> List[np.ndarray]:
+        # Empty case
+        if not chunks:
+            return []
+        # Prepare inputs with instruction
+        inputs = [[self.instruction, chunk] for chunk in chunks]
+        # Use the model to encode the chunks
+        embeddings = self.model.encode(inputs)
         return embeddings
     
     # Function to get the embedding dimension
