@@ -55,7 +55,7 @@ class RAGSearch:
         
         # 4. Create a prompt that includes both the context and the original query
         context_str = "\n\n".join(contexts)
-        enhanced_prompt = f"""Use the following information to answer the question. If the information doesn't contain the answer, say you don't know based on the available information.
+        enhanced_prompt = f"""Use the following information to answer the question.
 
 Context information:
 {context_str}
