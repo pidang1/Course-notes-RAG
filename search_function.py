@@ -69,7 +69,7 @@ User question: {user_query}"""
 
 def main():
     index_name = os.getenv("PINECONE_INDEX_NAME", "ds4300")
-    model_name = "llama3.2"  
+    model_name = "mistral"  
     
     rag_search = RAGSearch(index_name, model_name)
     

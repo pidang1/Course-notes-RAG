@@ -9,7 +9,7 @@ from chunking import chunk_text
 
 # filepath: c:\Users\daoho\Desktop\Progamming\Course-notes-RAG\main.py
 
-def process_documents(directory_path: str, chunk_size: int = 250, overlap: int = 50) -> tuple:
+def process_documents(directory_path: str, chunk_size: int = 500, overlap: int = 100) -> tuple:
     """Process documents from a directory, create chunks, and embed them."""
     # Load documents
     documents = load_documents(directory_path)

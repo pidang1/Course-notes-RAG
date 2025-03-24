@@ -8,3 +8,6 @@ pypdf
 ollama
 sentence-transformers
 pinecone
+nomic
+InstructorEmbedding
+huggingface_hub
