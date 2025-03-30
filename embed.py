@@ -2,7 +2,7 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import List
 # from InstructorEmbedding import INSTRUCTOR
-# from nomic import embed
+from nomic import embed
 
 
 class MPNetEmbedder:
@@ -61,7 +61,7 @@ class NomicEmbedder:
     def __init__(self):
         """Initialize the embedder with the nomic-embed-text model"""
         print("Loading nomic-embed-text embedding model...")
-        self.model = EmbeddingModel()
+        self.model = embed.EmbeddingModel()
         # Get embedding dimension by testing with a sample text
         sample_embedding = self.model.embed(["Sample text"])
         self.embedding_dim = sample_embedding.shape[1]
