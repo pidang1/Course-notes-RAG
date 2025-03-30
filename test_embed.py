@@ -1,4 +1,4 @@
-from embed import InstructorEmbedder
+from embed import NomicEmbedder
 
 def testEmbedder():
     # Create sample text chunks
@@ -7,7 +7,7 @@ def testEmbedder():
     ]
     
     # Create embedder
-    embedder = InstructorEmbedder()
+    embedder = NomicEmbedder()
     
     # Get embeddings for list of chunks
     embeddings = embedder.embed_chunks(chunks)

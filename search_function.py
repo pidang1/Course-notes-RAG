@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+## The function used to manually test the RAG search functionality. 
+
+
 # Get Pinecone API key and environment from environment variables
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
@@ -77,6 +80,52 @@ def main():
     
     while True:
         user_query = input("\nEnter your question: ")
+        """
+        27 
+        30
+      /    \
+    20      50
+   /  \
+ 10    25
+        """
+#         user_query = """
+#         Assume you are presented with a collection of documents structured like the following example.  Assume the database is named university and the collection is named students.
+#         {
+#   "student_id": "S123456789",
+#   "first_name": "Alex",
+#   "last_name": "Johnson",
+#   "email": "alex.johnson@example.edu",
+#   "enrollment_year": 2023,
+#   "major": "Computer Science",
+#   "courses_completed": [
+#     {
+#       "course_id": "CS101",
+#       "course_name": "Introduction to Programming",
+#       "semester": "Fall 2023",
+#       "credits": 4,
+#       "grade": "A-"
+#     },
+#     {
+#       "course_id": "MATH204",
+#       "course_name": "Calculus II",
+#       "semester": "Fall 2023",
+#       "credits": 4,
+#       "grade": "B+"
+#     },
+#     {
+#       "course_id": "ENG150",
+#       "course_name": "Academic Writing",
+#       "semester": "Fall 2023",
+#       "credits": 3,
+#       "grade": "A"
+#     }
+#   ]
+# }
+
+# Provide a query to the following prompt using PyMongo library code. 
+
+# Write a query to return all students who took “Intro to Big Data” in Spring 2023 and got at least a “B+” grade.  Only return the students' first and last names and their email addresses. Return the results sorted by students' last names and then by first names.
+#         """
         
         if user_query.lower() == 'exit':
             print("Thank you for using RAG Search. Goodbye!")

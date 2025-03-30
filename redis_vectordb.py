@@ -11,7 +11,7 @@ from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 # load environment variables
 load_dotenv()
 
-# get Redis connection details from environment variables
+# get Redis connection details from environment variables (defualt to localhost:6379 if not found in .env)
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
@@ -21,7 +21,7 @@ INDEX_NAME = os.getenv("REDIS_INDEX_NAME", "ds4300_index")
 client = redis.Redis(
     host=REDIS_HOST,
     port=REDIS_PORT,
-    password=REDIS_PASSWORD,
+    db=0,
     decode_responses=False
 )
 
@@ -40,7 +40,7 @@ def initialize_redis():
             VectorField("embedding", 
                       "FLAT", {
                           "TYPE": "FLOAT32",
-                          "DIM": 768,  # Adjust based on your embedding model
+                          "DIM": 768,  
                           "DISTANCE_METRIC": "COSINE"
                       })
         ]

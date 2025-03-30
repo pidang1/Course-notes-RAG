@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 from pinecone import Pinecone
 
+## Embedding pipeline to emebd all documents using MPNetEmbedder and Pinecone's Vector DB
+
 # Load environment variables
 load_dotenv()
 
