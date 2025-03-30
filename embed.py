@@ -1,8 +1,8 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import List
+import ollama
 # from InstructorEmbedding import INSTRUCTOR
-from nomic import embed
 
 
 class MPNetEmbedder:
@@ -61,19 +61,23 @@ class NomicEmbedder:
     def __init__(self):
         """Initialize the embedder with the nomic-embed-text model"""
         print("Loading nomic-embed-text embedding model...")
-        self.model = embed.EmbeddingModel()
+        self.model = ollama
         # Get embedding dimension by testing with a sample text
-        sample_embedding = self.model.embed(["Sample text"])
-        self.embedding_dim = sample_embedding.shape[1]
+        sample_response = self.model.embeddings(model='nomic-embed-text', prompt="Sample text")
+        sample_embedding = np.array(sample_response['embedding'])
+        self.embedding_dim = len(sample_embedding)
         print(f"Model loaded successfully with embedding dimension: {self.embedding_dim}")
-        
     # Embed a list of text chunks
     def embed_chunks(self, chunks: List[str]) -> List[np.ndarray]:
         # Empty case
         if not chunks:
             return []
-        # Use the model to encode the chunks
-        embeddings = self.model.embed(chunks)
+        # Use the model to encode the chunks chunk by chunk
+        embeddings = []
+        for chunk in chunks:
+            response = self.model.embeddings(model='nomic-embed-text', prompt=chunk)
+            embedding = np.array(response['embedding'])
+            embeddings.append(embedding)
         return embeddings
     
     # Function to get the embedding dimension

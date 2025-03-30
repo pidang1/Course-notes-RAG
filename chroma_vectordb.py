@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 import chromadb
 
+
 # Load environment variables
 load_dotenv()
 
