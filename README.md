@@ -8,7 +8,7 @@ For this project, we'll be using the following technologies for our architecture
 | Large Language Models | Llama 3.2, Mistral 7B  |
 | Offline inferences/llm hosting | Ollama |
 | Vector Database | Redis Vector DB, Chroma, Pinecone |
-| Embedding models | sentence transformers/all-MiniLM-L6-v2, nomic-embed-text( via [Ollama](https://ollama.com/library/nomic-embed-text)) and InstructorXL |
+| Embedding models | sentence transformers/all-MiniLM-L6-v2, [nomic-embed-text]((https://ollama.com/library/nomic-embed-text)) and [mxbai-embed-large](https://ollama.com/library/mxbai-embed-large) |
 
 1. if this is your first time running the project, make sure to run: 
 ```bash

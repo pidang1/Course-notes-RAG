@@ -2,7 +2,7 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import List
 import ollama
-from InstructorEmbedding import INSTRUCTOR
+from llama_index.embeddings.instructor import InstructorEmbedding
 
 
 class MPNetEmbedder:
@@ -91,7 +91,7 @@ class InstructorEmbedder:
     def __init__(self):
         """Initialize the embedder with the InstructorXL model"""
         print("Loading InstructorXL embedding model...")
-        self.model = INSTRUCTOR('hkunlp/instructor-xl')
+        self.model = InstructorEmbedding(model_name='hkunlp/instructor-xl')
         self.instruction = "Represent the text for retrieval from course notes:"
         # Get embedding dimension by testing with a sample text
         sample_embedding = self.model.encode([[self.instruction, "Sample text"]])
