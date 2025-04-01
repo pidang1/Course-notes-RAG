@@ -4,6 +4,8 @@ import time
 from typing import Dict, List
 from langchain_community.document_loaders import PyPDFLoader
 
+# Script used to load all documents from a given directory, and extract text from the given pdfs.
+
 # loads PDF documents from specified directory
 def load_documents(directory_path: str) -> Dict[str, List]:
     documents = {}
