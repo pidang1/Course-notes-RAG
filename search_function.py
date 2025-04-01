@@ -77,6 +77,8 @@ def main():
     
     while True:
         user_query = input("\nEnter your question: ")
+
+        ""
         
         if user_query.lower() == 'exit':
             print("Thank you for using RAG Search. Goodbye!")
