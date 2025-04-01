@@ -2,7 +2,6 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import List
 import ollama
-from llama_index.embeddings.instructor import InstructorEmbedding
 
 
 class MPNetEmbedder:

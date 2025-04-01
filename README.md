@@ -37,3 +37,9 @@ ollama run llama3.2
 ```
 ollama run mistral
 ```
+```
+ollama pull mxbai-embed-large
+```
+```
+ollama pull nomic-embed-text
+```
