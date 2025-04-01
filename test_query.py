@@ -3,17 +3,15 @@ from pinecone_vectordb import query, initialize_pinecone
 
 def testQuery():
     # Initialize Pinecone
-    initialize_pinecone()
+    db = initialize_pinecone()
     
-    query_text = "When was Redis found?"
+    query_text = "explain the 3 principles of the CAP theorem"
     
     # Query the index
-    results = query(query_text, initialize_pinecone)
+    results = query(db, query_text)
     
     # Print results
-    print("Query Results:")
-    for result in results:
-        print(result)
+    print("Query Results:", results)
     
 
 testQuery()
