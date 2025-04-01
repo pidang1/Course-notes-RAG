@@ -3,7 +3,7 @@ import sys
 from typing import List, Dict, Any
 import numpy as np
 from document_loader import load_documents
-from embed import MPNetEmbedder
+from embed import SentenceTransformerEmbedder
 from pinecone_vectordb import initialize_pinecone, upload_embeddings_to_pinecone
 from chunking import chunk_text
 
@@ -19,7 +19,7 @@ def process_documents(directory_path: str, chunk_size: int = 500, overlap: int =
         return [], []
     
     # Initialize embedder
-    embedder = MPNetEmbedder()
+    embedder = SentenceTransformerEmbedder()
     
     all_chunks = []
     all_metadata = []

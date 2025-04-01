@@ -1,87 +1,98 @@
 import os
-import time
-import numpy as np
+import sys
 from typing import List, Dict, Any
-from dotenv import load_dotenv
-from pinecone import Pinecone
+import numpy as np
+from document_loader import load_documents
+from embed import SentenceTransformerEmbedder
+from pinecone_vectordb import initialize_pinecone, upload_embeddings_to_pinecone
+from chunking import chunk_text
 
-## Embedding pipeline to emebd all documents using MPNetEmbedder and Pinecone's Vector DB
+# filepath: c:\Users\daoho\Desktop\Progamming\Course-notes-RAG\main.py
 
-# Load environment variables
-load_dotenv()
-
-# Get Pinecone API key and environment from environment variables
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
-INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "ds4300")
-
-# Initialize Pinecone client
-client = Pinecone(api_key=PINECONE_API_KEY)
-
-def initialize_pinecone():
-    """Initialize Pinecone index."""
-    existing_indexes = [index_info['name'] for index_info in client.list_indexes()]
+def process_documents(directory_path: str, chunk_size: int = 500, overlap: int = 100) -> tuple:
+    """Process documents from a directory, create chunks, and embed them."""
+    # Load documents
+    documents = load_documents(directory_path)
     
-    if INDEX_NAME not in existing_indexes:
-        print(f"Creating index {INDEX_NAME}...")
-        client.create_index(
-            name=INDEX_NAME,
-            dimension=1536,  # Adjust this based on your embedding model
-            metric="cosine"
-        )
-        time.sleep(2)  # Wait for index to be initialized
+    if not documents:
+        print("No documents found.")
+        return [], []
+    
+    # Initialize embedder
+    embedder = SentenceTransformerEmbedder()
+    
+    all_chunks = []
+    all_metadata = []
+    
+    # Process each document
+    for filename, pages in documents.items():
+        print(f"Processing {filename}...")
+        
+        # Combine all pages into a single text
+        complete_text = ""
+        for page in pages:
+            complete_text += page.page_content + " "
+        
+        # Create chunks from the document
+        chunks = chunk_text(complete_text, chunk_size, overlap)
+        print(f"Created {len(chunks)} chunks from {filename}")
+        
+        # Create metadata for each chunk
+        metadata_list = [
+            {
+                "source": filename,
+                "text": chunk 
+            }
+            for chunk in chunks
+        ]
+        
+        # Add to master lists
+        all_chunks.extend(chunks)
+        all_metadata.extend(metadata_list)
+    
+    # Embed all chunks
+    print(f"Embedding {len(all_chunks)} chunks...")
+    embeddings = embedder.embed_chunks(all_chunks)
+    print(f"Successfully embedded {len(embeddings)} chunks")
+    
+    return embeddings, all_metadata
 
-    return client.Index('ds4300')
-
-def upload_embeddings_to_pinecone(
-    index,
-    embeddings: List[np.ndarray], 
-    documents: List[Dict[str, Any]]
-):
+def query(index, query_text: str, top_k: int = 1) -> List[Dict[str, Any]]:
+    """Query the Pinecone index with a given text."""
+    # Embed the query text
+    embedder = SentenceTransformerEmbedder()
+    query_embedding = embedder.embed_chunks([query_text])[0]
     
-    #Upload embeddings to Pinecone index.
-    total_vectors = len(embeddings)
-    print(f"Uploading {total_vectors} vectors to Pinecone...")
+    # Query the index
+    results = index.query(queries=[query_embedding], top_k=top_k, include_metadata=True)
     
-    # Prepare vectors in Pinecone format
-    vectors = []
-    for i in range(total_vectors):
-        vector_id = f"doc_{i}"
-        vector_embedding = embeddings[i].tolist()
-        vector_metadata = documents[i]
-        vectors.append((vector_id, vector_embedding, vector_metadata))
-    
-    # Upsert to Pinecone
-    index.upsert(vectors=vectors)
-    
-    print(f"Successfully uploaded {total_vectors} vectors to Pinecone.")
+    return results
 
 def main():
-    """Main function to upload embeddings to Pinecone."""
-    # Initialize Pinecone
+    if len(sys.argv) < 2:
+        print("Please provide a directory path containing PDF documents")
+        print("Usage: python main.py <directory_path>")
+        return
+    
+    directory_path = sys.argv[1]
+    
+    if not os.path.isdir(directory_path):
+        print(f"Error: {directory_path} is not a valid directory")
+        return
+    
+    print(f"Processing documents from {directory_path}")
+    
+    # Process documents (load, chunk, embed)
+    embeddings, metadata = process_documents(directory_path)
+    
+    if len(embeddings) == 0:
+        print("No embeddings were generated. Exiting...")
+        return
+    
+    # Upload to Pinecone
     index = initialize_pinecone()
-    
-    # Example: Load your embeddings and documents here
-    # In a real scenario, you would load these from files or generate them
-    sample_embeddings = [np.random.rand(768) for _ in range(5)]  # Replace with actual embeddings
-    sample_documents = [
-        {"text": "Sample document 1", "source": "source1", "category": "category1"},
-        {"text": "Sample document 2", "source": "source1", "category": "category2"},
-        {"text": "Sample document 3", "source": "source2", "category": "category1"},
-        {"text": "Sample document 4", "source": "source2", "category": "category2"},
-        {"text": "Sample document 5", "source": "source3", "category": "category3"},
-    ]
-    
-    # Upload embeddings to Pinecone
-    upload_embeddings_to_pinecone(index, sample_embeddings, sample_documents)
-    
-    # Query example
-    query_results = index.query(
-        vector=np.random.rand(768).tolist(),  # Replace with actual query embedding
-        top_k=3,
-        include_metadata=True
-    )
-    print("\nQuery results:", query_results)
+    upload_embeddings_to_pinecone(index, embeddings, metadata)
+    print("Process completed successfully!")
 
 if __name__ == "__main__":
     main()

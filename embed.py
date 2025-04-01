@@ -3,8 +3,7 @@ import numpy as np
 from typing import List
 import ollama
 
-
-class MPNetEmbedder:
+class SentenceTransformerEmbedder:
     """A simple class that embeds text using the sentence-transformers/all-mpnet-base-v2 model"""
     
     def __init__(self):
