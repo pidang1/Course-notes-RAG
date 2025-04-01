@@ -85,33 +85,33 @@ class NomicEmbedder:
         return self.embedding_dim
 
 
-class InstructorEmbedder:
-    """A simple class that embeds text using the InstructorXL model"""
+class MxbaiEmbedder:
+    """A simple class that embeds text using the mxbai-embed-large model"""
     
     def __init__(self):
-        """Initialize the embedder with the InstructorXL model"""
-        print("Loading InstructorXL embedding model...")
-        self.model = InstructorEmbedding(model_name='hkunlp/instructor-xl')
-        self.instruction = "Represent the text for retrieval from course notes:"
+        """Initialize the embedder with the mxbai-embed-large model"""
+        print("Loading mxbai-embed-large embedding model...")
+        self.model = ollama
         # Get embedding dimension by testing with a sample text
-        sample_embedding = self.model.encode([[self.instruction, "Sample text"]])
-        self.embedding_dim = sample_embedding.shape[1]
+        sample_response = self.model.embeddings(model='mxbai-embed-large', prompt="Sample text")
+        sample_embedding = np.array(sample_response['embedding'])
+        self.embedding_dim = len(sample_embedding)
         print(f"Model loaded successfully with embedding dimension: {self.embedding_dim}")
-        
     # Embed a list of text chunks
     def embed_chunks(self, chunks: List[str]) -> List[np.ndarray]:
         # Empty case
         if not chunks:
             return []
-        # Prepare inputs with instruction
-        inputs = []
+        # Use the model to encode the chunks chunk by chunk
+        embeddings = []
         for chunk in chunks:
-            inputs.append([self.instruction, chunk])
-        # Use the model to encode the chunks
-        embeddings = self.model.encode(inputs)
+            response = self.model.embeddings(model='mxbai-embed-large', prompt=chunk)
+            embedding = np.array(response['embedding'])
+            embeddings.append(embedding)
         return embeddings
     
     # Function to get the embedding dimension
     def get_embedding_dimension(self) -> int:
         return self.embedding_dim
+
 
