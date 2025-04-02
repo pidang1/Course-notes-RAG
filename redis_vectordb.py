@@ -68,7 +68,7 @@ def upload_embeddings_to_redis(
     pipeline.execute()
     print(f"Successfully uploaded {total_vectors} vectors to Redis.")
 
-def query(client, query_text: str, top_k: int = 1):
+def query_redis(client, query_text: str, top_k: int = 1):
     """Query the Redis index and return the most relevant context."""
     # Embed the user query
     embedder = NomicEmbedder()

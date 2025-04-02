@@ -64,7 +64,7 @@ def clear_pinecone_index(index):
     print(f"Index {INDEX_NAME} cleared successfully.")
 
 # Query the Pinecone index and return the most relevant context
-def query(index, query: str, top_k=1):
+def query_pinecone(index, query: str, top_k=1):
         # Embed the user query
         embedder = SentenceTransformerEmbedder()
         query_embedding = embedder.embed_chunks([query])[0].tolist()

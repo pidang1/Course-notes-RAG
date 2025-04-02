@@ -1,10 +1,15 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
+from pinecone_vectordb import clear_pinecone_index, initialize_pinecone
 from upload_to_chroma import perform_upload_chroma
 from upload_to_redis import perform_upload_redis
 from upload_to_pinecone import perform_upload_pinecone
+from query_question import query_question
+from llm_models.llama import LLM
+import time
 import sys
 import os
+
 
 questions = [
     "How many databases can Redis have?",
@@ -52,10 +57,11 @@ class PipelineRun:
 def run_pipeline_variant(
     path: str,
     question: str,
-    llm_model: str,
+    llm_model: LLM,
     database: str,
     chunk_size: int,
-    overlap: int
+    overlap: int,
+    prompt: str
 ) -> PipelineRun:
     """Run a specific variant of the pipeline and collect statistics"""
 
@@ -66,7 +72,7 @@ def run_pipeline_variant(
         llm_model=llm_model,
         chunk_size=chunk_size,
         overlap=overlap,
-        question=question
+        question=question,
     )
     
     # Retrieve the appropriate upload function based on the database
@@ -79,6 +85,15 @@ def run_pipeline_variant(
     result.embedding_time = statistics["embed_time"]
     result.upload_time = statistics["upload_time"]
     result.num_chunks = statistics["chunk_count"]
+    
+    query_start_time = time.time()
+    answer = query_question(database, index, question, llm_model, prompt)
+    query_time = time.time() - query_start_time
+    
+    result.query_time = query_time
+    result.answer = answer
+    
+    
     
     print(result)
     
@@ -100,9 +115,12 @@ if not os.path.isdir(directory_path):
     quit()
 
 # Configuration variants to test
+llama = LLM("llama3.2")
+mistral = LLM("mistral")
 embedding_models = ["sentence_transformer", "nomic", "mxbai"]
 databases = ["chroma", "redis", "pinecone"]
-llm_models = ["llama 3.2", "mixtral"]
+llm_models = [llama, mistral]
+prompts = ["Answer the question based on the context provided below:", "Please provide a detailed answer to the question below based on the context provided:"]
 chunk_sizes = [100, 500]
 overlaps = [0, 100]
 
@@ -112,20 +130,25 @@ for llm in llm_models:
     for db in databases:
         for chunk_size in chunk_sizes:
             for overlap in overlaps:
-                for question in questions:
-                    run = run_pipeline_variant(
-                        path=directory_path,
-                        question=question,
-                        llm_model=llm,
-                        database=db,
-                        chunk_size=chunk_size,
-                        overlap=overlap
-                    )
-                    results.append(run)
-                    quit()
-                # Delete pinecone index after each overlap switch
-                
-            # Delete pinecone index after each chunk size switch
+                for prompt in prompts:
+                    for question in questions:
+                        run = run_pipeline_variant(
+                            path=directory_path,
+                            question=question,
+                            llm_model=llm,
+                            database=db,
+                            chunk_size=chunk_size,
+                            overlap=overlap,
+                            prompt=prompt
+                        )
+                        results.append(run)
+                        quit()
+                    # Delete pinecone index after each overlap switch
+                    index = initialize_pinecone()
+                    clear_pinecone_index(index)
+                # Delete pinecone index after each chunk size switch
+                index = initialize_pinecone()
+                clear_pinecone_index(index)
+# Write results out into CSV 
+print(results)
 
-# Save results for analysis
-# TODO: Implement saving results to CSV/JSON
