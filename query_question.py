@@ -14,8 +14,9 @@ def query_question(indexName, index, query, llm, prompt):
     # Get the chunk based on the index name
     chunk = query_function_map[indexName](index, query)
     
-    # Use the LLM to generate a response
-    context = f"{prompt}\n\n{chunk}"
+    # Format the prompt with the user query and retrieved chunks
+    context = prompt.format(user_query=query, retrieved_passage=chunk)
+    
     response = llm.generate_response(context)
     return response
     
