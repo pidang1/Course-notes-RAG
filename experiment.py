@@ -1,6 +1,9 @@
 import time
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
+from upload_to_chroma import perform_upload_chroma
+from upload_to_redis import perform_upload_redis
+from upload_to_pinecone import perform_upload_pinecone
 
 questions = [
     "How many databases can Redis have?",
@@ -29,12 +32,11 @@ class PipelineRun:
     # Results
     num_chunks: int = 0
     answer: str = ""
-    score: Optional[float] = None  # For manual evaluation later
+    score: Optional[float] = None  # For manual qualitative evaluation later
     
-    # Additional metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
 
 def run_pipeline_variant(
+    path: str,
     question: str,
     llm_model: str,
     database: str,
@@ -48,9 +50,14 @@ def run_pipeline_variant(
         "pinecone": "sentence-transformer"
     }
     
+    db_upload_map = {
+        "chroma": perform_upload_chroma,
+        "redis": perform_upload_redis,
+        "pinecone": perform_upload_pinecone
+    }
     
     result = PipelineRun(
-        embedding_model=embedding_model,
+        embedding_model=db_embedding_map[database],
         database=database,
         llm_model=llm_model,
         chunk_size=chunk_size,
@@ -58,7 +65,18 @@ def run_pipeline_variant(
         question=question
     )
     
+    # Retrieve the appropriate upload function based on the database
+    db_upload_func = db_upload_map[database]
     
+    # Embed the dataset and retrieve statistics
+    index, statistics = db_upload_func(path, chunk_size, overlap)
+    
+    # Store the statistics in the result object
+    result.embedding_time = statistics["embed_time"]
+    result.upload_time = statistics["upload_time"]
+    result.num_chunks = statistics["chunk_count"]
+    
+    print(results)
     
     return result
 
@@ -69,7 +87,7 @@ results: List[PipelineRun] = []
 embedding_models = ["sentence_transformer", "nomic", "mxbai"]
 databases = ["chroma", "redis", "pinecone"]
 llm_models = ["llama 3.2", "mixtral"]
-chunk_sizes = [100, 500, 1000]
+chunk_sizes = [100, 500]
 overlaps = [0, 100]
 
 # Run experiments with different configurations

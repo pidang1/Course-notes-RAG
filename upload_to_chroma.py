@@ -68,8 +68,6 @@ def perform_upload_chroma(path: str, chunk_size: int, overlap: int):
         "embed_time": embed_time,
         "upload_time": upload_time,
         "chunk_count": len(embeddings),
-        "chunk_size": len(metadata[0]["text"]),
-        "overlap": overlap,
      }
     return index, statistics
 
