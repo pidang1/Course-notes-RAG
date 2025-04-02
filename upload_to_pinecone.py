@@ -38,7 +38,7 @@ def process_documents(directory_path: str, chunk_size: int = 500, overlap: int =
         
         # Create chunks from the document
         chunks = chunk_text(complete_text, chunk_size, overlap)
-        print(f"Created {len(chunks)} chunks from {filename}")
+        # print(f"Created {len(chunks)} chunks from {filename}")
         
         # Create metadata for each chunk
         metadata_list = [

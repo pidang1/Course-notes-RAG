@@ -80,7 +80,7 @@ def run_pipeline_variant(
     result.upload_time = statistics["upload_time"]
     result.num_chunks = statistics["chunk_count"]
     
-    print(results)
+    print(result)
     
     return result
 
@@ -122,6 +122,7 @@ for llm in llm_models:
                         overlap=overlap
                     )
                     results.append(run)
+                    quit()
                 # Delete pinecone index after each overlap switch
                 
             # Delete pinecone index after each chunk size switch
