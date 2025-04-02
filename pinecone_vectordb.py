@@ -58,10 +58,17 @@ def upload_embeddings_to_pinecone(
     print(f"Successfully uploaded {total_vectors} vectors to Pinecone.")
     
 def clear_pinecone_index(index):
-    """Clear the Pinecone index."""
-    print(f"Clearing index {INDEX_NAME}...")
-    index.delete(delete_all=True)
-    print(f"Index {INDEX_NAME} cleared successfully.")
+    """Clear the Pinecone index if it contains data."""
+    # Check if the index has any vectors
+    stats = index.describe_index_stats()
+    total_vectors = stats.get('total_vector_count', 0)
+    
+    if total_vectors > 0:
+        print(f"Clearing index {INDEX_NAME} with {total_vectors} vectors...")
+        index.delete(delete_all=True)
+        print(f"Index {INDEX_NAME} cleared successfully.")
+    else:
+        print(f"Index {INDEX_NAME} is already empty. No need to clear.")
 
 # Query the Pinecone index and return the most relevant context
 def query_pinecone(index, query: str, top_k=1):
