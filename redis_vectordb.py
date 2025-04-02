@@ -1,129 +1,153 @@
-# import os
-# from typing import List
-# from embed import NomicEmbedder  # Changed import here
-# import redis
-# from redis.commands.search.query import Query
-# import numpy as np
+import os
+import time
+from typing import List, Dict, Any
+import numpy as np
+import redis
+from redis.commands.search.query import Query
+from dotenv import load_dotenv
+from embed import NomicEmbedder
+
+# Load environment variables
+load_dotenv()
+
+# Get Redis configuration from environment variables
+INDEX_NAME = "ds4300"
 
 
-# class RedisVectorDB:
-#     def __init__(self, index_name: str, embedding_model: NomicEmbedder, redis_host: str = "localhost", redis_port: int = 6379):
-#         self.index_name = index_name
-#         self.embedding_model = embedding_model
-#         self.redis_host = redis_host
-#         self.redis_port = redis_port
-#         self.redis_client = redis.Redis(host=self.redis_host, port=self.redis_port)
 
-#     def create_index(self, embedding_dimension: int):
-#         """
-#         Creates a Redis index with the specified name and embedding dimension.
-#         """
-#         try:
-#             self.redis_client.ft(self.index_name).info()
-#             print("Index already exists")
-#             return
-#         except:
-#             pass
+# Initialize with the embedding dimension nomic embed text model uses
+def initialize_redis_index(embedding_dimension: int = 768):
+    """Initialize Redis vector index."""
+    
+    # Initialize Redis client
+    redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+    print(redis_client.ping())
 
-#         self.redis_client.ft(self.index_name).create_index(
-#             fields=[
-#                 redis.commands.search.field.VectorField(
-#                     "embedding",
-#                     "FLAT",
-#                     {
-#                         "TYPE": "FLOAT32",
-#                         "DIM": embedding_dimension,
-#                         "DISTANCE_METRIC": "COSINE",
-#                     },
-#                 )
-#             ]
-#         )
-#         print(f"Index {self.index_name} created successfully.")
+    try:
+        redis_client.ft(INDEX_NAME).info()
+        print(f"Index {INDEX_NAME} already exists")
+    except:
+        # Create index if it doesn't exist
+        redis_client.ft(INDEX_NAME).create_index(
+            fields=[
+                redis.commands.search.field.VectorField(
+                    "embedding",
+                    "FLAT",
+                    {
+                        "TYPE": "FLOAT32",
+                        "DIM": embedding_dimension,
+                        "DISTANCE_METRIC": "COSINE",
+                    },
+                ),
+                redis.commands.search.field.TextField("text"),
+                redis.commands.search.field.TextField("source"),
+                redis.commands.search.field.TextField("category")
+            ]
+        )
+        print(f"Index {INDEX_NAME} created successfully.")
+    
+    return redis_client
 
-#     def add_vectors(self, texts: List[str]):
-#         """
-#         Adds text embeddings to the Redis vector database.
-#         """
-#         embeddings = self.embedding_model.embed_chunks(texts)
+def upload_embeddings_to_redis(
+    client,
+    embeddings: List[np.ndarray],
+    documents: List[Dict[str, Any]]
+):
+    """Upload embeddings to Redis vector database."""
+    total_vectors = len(embeddings)
+    print(f"Uploading {total_vectors} vectors to Redis...")
+    
+    # Use a pipeline for faster insertion
+    pipeline = client.pipeline()
+    for i in range(total_vectors):
+        vector_id = f"doc_{i}"
+        embedding = embeddings[i].astype(np.float32)
         
-#         # Use a pipeline for faster insertion
-#         pipeline = self.redis_client.pipeline()
-#         for i, embedding in enumerate(embeddings):
-#             # Generate a unique key for each vector
-#             key = f"vector:{i}"  # Changed key naming
-#             # Store the embedding as a numpy array
-#             pipeline.hset(key, mapping={"embedding": embedding.astype(np.float32).tobytes()})  # Convert embedding to bytes
-#         pipeline.execute()
-#         print(f"Added {len(embeddings)} vectors to Redis.")
+        # Prepare metadata from document
+        metadata = documents[i]
+        mapping = {"embedding": embedding.tobytes()}
+        mapping.update(metadata)
+        
+        # Store vector with metadata
+        pipeline.hset(vector_id, mapping=mapping)
+    
+    pipeline.execute()
+    print(f"Successfully uploaded {total_vectors} vectors to Redis.")
 
-#     def search(self, query: str, top_k: int = 5) -> List[str]:
-#         """
-#         Searches the Redis vector database for the most similar vectors to the query.
-#         """
-#         query_embedding = self.embedding_model.embed_chunks([query])[0]
-        
-#         # Ensure the query embedding is a numpy array of float32
-#         if not isinstance(query_embedding, np.ndarray):
-#             query_embedding = np.array(query_embedding, dtype=np.float32)
-#         else:
-#             query_embedding = query_embedding.astype(np.float32)
-            
-#         # Convert the query embedding to bytes
-#         query_embedding_bytes = query_embedding.tobytes()
-        
-#         # Prepare the query
-#         q = Query(
-#             f"*=>[KNN {top_k} @embedding $query_vector AS score]"
-#         ).sort_by("score").dialect(2)
-        
-#         params = {"query_vector": query_embedding_bytes}
-        
-#         # Execute the query
-#         results = self.redis_client.ft(self.index_name).search(q, query_params=params)
-        
-#         # Extract and return the results
-#         return [(result.id, result.score) for result in results.docs]
+def query(client, query_text: str, top_k: int = 1):
+    """Query the Redis index and return the most relevant context."""
+    # Embed the user query
+    embedder = NomicEmbedder()
+    query_embedding = embedder.embed_chunks([query_text])[0]
+    
+    # Ensure the query embedding is a numpy array of float32
+    if not isinstance(query_embedding, np.ndarray):
+        query_embedding = np.array(query_embedding, dtype=np.float32)
+    else:
+        query_embedding = query_embedding.astype(np.float32)
+    
+    # Convert the query embedding to bytes
+    query_embedding_bytes = query_embedding.tobytes()
+    
+    # Prepare the query
+    q = Query(
+        f"*=>[KNN {top_k} @embedding $query_vector AS score]"
+    ).sort_by("score").dialect(2)
+    
+    params = {"query_vector": query_embedding_bytes}
+    
+    # Execute the query
+    results = client.ft(INDEX_NAME).search(q, query_params=params)
+    
+    # Extract context from search results
+    contexts = []
+    for doc in results.docs:
+        if hasattr(doc, 'text'):
+            contexts.append(doc.text)
+    
+    # Join contexts
+    context_str = "\n\n".join(contexts)
+    return context_str
 
-#     def delete_index(self):
-#         """
-#         Deletes the Redis index.
-#         """
-#         self.redis_client.ft(self.index_name).dropindex()
-#         print(f"Index {self.index_name} deleted.")
+def delete_index(redis_client):
+    """Delete the Redis index."""
+    redis_client.ft(INDEX_NAME).dropindex()
+    print(f"Index {INDEX_NAME} deleted.")
 
-# def test_redis_vector_db():
-#     # Initialize the NomicEmbedder
-#     nomic_embedder = NomicEmbedder()
-#     embedding_dimension = nomic_embedder.get_embedding_dimension()
+def main():
+    """Main function to upload embeddings to Redis (for testing)."""
+    # Initialize Redis index
+    embedder = NomicEmbedder()
     
-#     # Configure Redis connection
-#     redis_host = "localhost"
-#     redis_port = 6379
-#     index_name = "my_index"
+    client = initialize_redis_index(embedding_dimension=embedder.get_embedding_dimension())
     
-#     # Initialize the RedisVectorDB
-#     redis_db = RedisVectorDB(index_name, nomic_embedder, redis_host, redis_port)
+    # # Sample data
+    # sample_texts = [
+    #     "Sample document 1",
+    #     "Sample document 2",
+    #     "Sample document 3",
+    #     "Sample document 4",
+    #     "Sample document 5"
+    # ]
     
-#     # Create the index
-#     redis_db.create_index(embedding_dimension)
+    # # Generate embeddings
+    # sample_embeddings = embedder.embed_chunks(sample_texts)
     
-#     # Sample texts to add
-#     texts = [
-#         "This is the first sample text.",
-#         "Here is the second text for testing.",
-#         "The third text is a bit longer."
-#     ]
+    # # Create documents
+    # sample_documents = [
+    #     {"text": "Sample document 1", "source": "source1", "category": "category1"},
+    #     {"text": "Sample document 2", "source": "source1", "category": "category2"},
+    #     {"text": "Sample document 3", "source": "source2", "category": "category1"},
+    #     {"text": "Sample document 4", "source": "source2", "category": "category2"},
+    #     {"text": "Sample document 5", "source": "source3", "category": "category3"},
+    # ]
     
-#     # Add the vectors to the database
-#     redis_db.add_vectors(texts)
+    # # Upload embeddings to Redis
+    # upload_embeddings_to_redis(client, sample_embeddings, sample_documents)
     
-#     # Perform a search
-#     query = "testing the search functionality"
-#     results = redis_db.search(query)
-#     print(f"Search results for query '{query}': {results}")
-    
-#     # Clean up: Delete the index
-#     redis_db.delete_index()
+    # # Query example
+    # result = query(client, "test query")
+    # print("\nQuery result:", result)
 
-# if __name__ == "__main__":
-#     test_redis_vector_db()
+if __name__ == "__main__":
+    main()
