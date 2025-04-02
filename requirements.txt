@@ -12,5 +12,5 @@ nomic
 InstructorEmbedding
 huggingface_hub
 llama-index
-chromadb
+chromadb==0.5.3
 onnxruntime==1.15.0

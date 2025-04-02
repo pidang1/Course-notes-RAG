@@ -17,13 +17,13 @@ def load_documents(directory_path: str) -> Dict[str, List]:
 
         if os.path.isfile(file_path):
             try:
-                print(f"Processing {filename}...")
+                # print(f"Processing {filename}...")
                 loader = PyPDFLoader(file_path)
                 pages = loader.load()
 
                 # store the pages
                 documents[filename] = pages
-                print(f"Successfully loaded {filename} ({len(pages)} pages)")
+                # print(f"Successfully loaded {filename} ({len(pages)} pages)")
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
 

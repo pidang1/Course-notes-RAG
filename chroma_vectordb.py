@@ -21,7 +21,7 @@ def initialize_chroma():
     """Initialize Chroma collection."""
     # Get or create collection
     # Initialize Chroma client
-    client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
+    client = chromadb.Client()
     try:
         # Try to get existing collection
         collection = client.get_collection(COLLECTION_NAME)
@@ -42,23 +42,27 @@ def upload_embeddings_to_chroma(
     embeddings: List[np.ndarray], 
     documents: List[str]
 ):
-    """Upload embeddings to Chroma collection."""
-    total_vectors = len(embeddings)
-    print(f"Uploading {total_vectors} vectors to Chroma...")
     
-    # Prepare data for Chroma
-    ids = [f"doc_{uuid4}" for i in range(total_vectors)]
-    emb_lists = [emb.tolist() for emb in embeddings]
-    
-    # Add to collection
-    collection.add(
-        ids=ids,
-        embeddings=emb_lists,
-        documents=documents
-    )
-    print("Added to collection successfully")
-    
-    print(f"Successfully uploaded {total_vectors} vectors to Chroma.")
+    try:
+        """Upload embeddings to Chroma collection."""
+        total_vectors = len(embeddings)
+        print(f"Uploading {total_vectors} vectors to Chroma...")
+        
+        # Prepare data for Chroma
+        ids = [f"doc_{uuid4()}" for i in range(total_vectors)]
+        emb_lists = [emb.tolist() for emb in embeddings]
+        
+        # Add to collection
+        collection.add(
+            ids=ids,
+            embeddings=emb_lists,
+            documents=documents
+        )
+        print("Added to collection successfully")
+        
+        print(f"Successfully uploaded {total_vectors} vectors to Chroma.")
+    except Exception as e:
+        print(f"Error uploading to Chroma: {e}")
     
 def query_chroma(collection, query_text: str, top_k: int = 1):
     """Query the Chroma collection and return the most relevant context."""

@@ -29,7 +29,7 @@ def process_documents(directory_path: str, chunk_size: int = 500, overlap: int =
     # Process each document
     embed_start_time = time.time()
     for filename, pages in documents.items():
-        print(f"Processing {filename}...")
+        # print(f"Processing {filename}...")
         
         # Combine all pages into a single text
         complete_text = ""

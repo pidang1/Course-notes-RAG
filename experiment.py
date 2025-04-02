@@ -26,11 +26,6 @@ db_upload_map = {
     "pinecone": perform_upload_pinecone
 }
 
-db_delete_map = {
-    "chroma": perform_upload_chroma.delete_index,
-    "redis": perform_upload_redis.delete_index,
-    "pinecone": perform_upload_pinecone.delete_index
-}
 
 @dataclass
 # Various statistics and results from the pipeline run
@@ -130,6 +125,6 @@ for llm in llm_models:
                 # Delete pinecone index after each overlap switch
                 
             # Delete pinecone index after each chunk size switch
-            
+
 # Save results for analysis
 # TODO: Implement saving results to CSV/JSON
