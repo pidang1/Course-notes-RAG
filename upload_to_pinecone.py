@@ -10,7 +10,7 @@ import time
 
 # filepath: c:\Users\daoho\Desktop\Progamming\Course-notes-RAG\main.py
 
-def perform_upload_pinecone(directory_path: str, chunk_size: int = 500, overlap: int = 100) -> tuple:
+def process_documents(directory_path: str, chunk_size: int = 500, overlap: int = 100) -> tuple:
     """Process documents from a directory, create chunks, and embed them."""
     # Load documents
     documents = load_documents(directory_path)
@@ -20,12 +20,14 @@ def perform_upload_pinecone(directory_path: str, chunk_size: int = 500, overlap:
         return [], []
     
     # Initialize embedder
+    
     embedder = SentenceTransformerEmbedder()
     
     all_chunks = []
     all_metadata = []
     
     # Process each document
+    embed_start_time = time.time()
     for filename, pages in documents.items():
         print(f"Processing {filename}...")
         
@@ -54,11 +56,12 @@ def perform_upload_pinecone(directory_path: str, chunk_size: int = 500, overlap:
     # Embed all chunks
     print(f"Embedding {len(all_chunks)} chunks...")
     embeddings = embedder.embed_chunks(all_chunks)
+    embed_time = time.time() - embed_start_time
     print(f"Successfully embedded {len(embeddings)} chunks")
     
-    return embeddings, all_metadata
+    return embeddings, all_metadata, embed_time
 
-def performUpload(path: str, chunk_size: int, overlap: int):
+def perform_upload_pinecone(path: str, chunk_size: int, overlap: int):
     print(f"Processing documents from {path}")
     
     # Process documents (load, chunk, embed)
@@ -85,7 +88,7 @@ def performUpload(path: str, chunk_size: int, overlap: int):
 def main():
     if len(sys.argv) < 2:
         print("Please provide a directory path containing PDF documents")
-        print("Usage: python main.py <directory_path>")
+        print("Usage: python upload_to_pinecone.py <directory_path>")
         return
     
     directory_path = sys.argv[1]
@@ -97,7 +100,7 @@ def main():
     print(f"Processing documents from {directory_path}")
     
     # Process documents (load, chunk, embed)
-    embeddings, metadata = process_documents(directory_path)
+    embeddings, metadata, embed_time = process_documents(directory_path)
     
     if len(embeddings) == 0:
         print("No embeddings were generated. Exiting...")

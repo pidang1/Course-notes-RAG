@@ -23,6 +23,7 @@ def process_documents(directory_path: str, chunk_size: int = 500, overlap: int =
     all_chunks = []
     
     # Process each document
+    embed_start_time = time.time()
     for filename, pages in documents.items():
         print(f"Processing {filename}...")
         
@@ -43,9 +44,10 @@ def process_documents(directory_path: str, chunk_size: int = 500, overlap: int =
     # Embed all chunks
     print(f"Embedding {len(all_chunks)} chunks...")
     embeddings = embedder.embed_chunks(all_chunks)
+    embed_time = time.time() - embed_start_time
     print(f"Successfully embedded {len(embeddings)} chunks")
     
-    return embeddings, all_chunks
+    return embeddings, all_chunks, embed_time
 
 def perform_upload_chroma(path: str, chunk_size: int, overlap: int):
     print(f"Processing documents from {path}")
@@ -86,7 +88,7 @@ def main():
     print(f"Processing documents from {directory_path}")
     
     # Process documents (load, chunk, embed)
-    embeddings, metadata = process_documents(directory_path)
+    embeddings, metadata, embed_time = process_documents(directory_path)
     
     if len(embeddings) == 0:
         print("No embeddings were generated. Exiting...")

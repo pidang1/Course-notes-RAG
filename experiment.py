@@ -1,9 +1,10 @@
-import time
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from upload_to_chroma import perform_upload_chroma
 from upload_to_redis import perform_upload_redis
 from upload_to_pinecone import perform_upload_pinecone
+import sys
+import os
 
 questions = [
     "How many databases can Redis have?",
@@ -83,6 +84,18 @@ def run_pipeline_variant(
 # Example of running experiments
 results: List[PipelineRun] = []
 
+
+if len(sys.argv) < 2:
+    print("Please provide a directory path containing PDF documents")
+    print("Usage: python experiment.py <directory_path>")
+    quit()
+
+directory_path = sys.argv[1]
+
+if not os.path.isdir(directory_path):
+    print(f"Error: {directory_path} is not a valid directory")
+    quit()
+
 # Configuration variants to test
 embedding_models = ["sentence_transformer", "nomic", "mxbai"]
 databases = ["chroma", "redis", "pinecone"]
@@ -97,6 +110,7 @@ for question in questions:
             for chunk_size in chunk_sizes:
                 for overlap in overlaps:
                     run = run_pipeline_variant(
+                        path=directory_path,
                         question=question,
                         llm_model=llm,
                         database=db,
