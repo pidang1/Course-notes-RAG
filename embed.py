@@ -35,7 +35,7 @@ def test_embedder():
     ]
     
     # Create embedder
-    embedder = MPNetEmbedder()
+    embedder = SentenceTransformerEmbedder()
     
     # Get embeddings for list of chunks
     embeddings = embedder.embed_chunks(chunks)

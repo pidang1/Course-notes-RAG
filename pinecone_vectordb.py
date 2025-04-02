@@ -56,6 +56,12 @@ def upload_embeddings_to_pinecone(
     index.upsert(vectors=vectors)
     
     print(f"Successfully uploaded {total_vectors} vectors to Pinecone.")
+    
+def clear_pinecone_index(index):
+    """Clear the Pinecone index."""
+    print(f"Clearing index {INDEX_NAME}...")
+    index.delete(delete_all=True)
+    print(f"Index {INDEX_NAME} cleared successfully.")
 
 # Query the Pinecone index and return the most relevant context
 def query(index, query: str, top_k=1):
