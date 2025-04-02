@@ -6,6 +6,7 @@ import redis
 from redis.commands.search.query import Query
 from dotenv import load_dotenv
 from embed import NomicEmbedder
+import base64
 
 # Load environment variables
 load_dotenv()
@@ -54,17 +55,16 @@ def upload_embeddings_to_redis(
     total_vectors = len(embeddings)
     print(f"Uploading {total_vectors} vectors to Redis...")
     
+    
     # Use a pipeline for faster insertion
     pipeline = client.pipeline()
     for i in range(total_vectors):
         vector_id = f"doc_{i}"
-        embedding = embeddings[i].astype(np.float32)
+        embedding = np.array(embeddings[i], dtype=np.float32)
         
-        # Store vector with text only
-        pipeline.hset(vector_id, mapping={
-            "embedding": embedding.tobytes(),
-            "text": documents[i] 
-        })
+        # Store the embedding as bytes and text associated with the embedding
+        pipeline.hset(vector_id, "text", documents[i]['text'])
+        pipeline.hset(vector_id, "embedding", embedding.tobytes())
     
     pipeline.execute()
     print(f"Successfully uploaded {total_vectors} vectors to Redis.")
