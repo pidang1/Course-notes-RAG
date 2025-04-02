@@ -22,7 +22,6 @@ def initialize_redis_index(embedding_dimension: int = 768):
     
     # Initialize Redis client
     redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
-    print(redis_client.ping())
 
     try:
         redis_client.ft(INDEX_NAME).info()

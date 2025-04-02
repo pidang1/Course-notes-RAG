@@ -14,6 +14,24 @@ questions = [
     "What is the purpose of logical replication (row based) in databases, and how is it different from statement-based replication?"
 ]
 
+db_embedding_map = {
+    "chroma": "mxbai-embed-large",
+    "redis": "nomic-embed-large",
+    "pinecone": "sentence-transformer"
+}
+    
+db_upload_map = {
+    "chroma": perform_upload_chroma,
+    "redis": perform_upload_redis,
+    "pinecone": perform_upload_pinecone
+}
+
+db_delete_map = {
+    "chroma": perform_upload_chroma.delete_index,
+    "redis": perform_upload_redis.delete_index,
+    "pinecone": perform_upload_pinecone.delete_index
+}
+
 @dataclass
 # Various statistics and results from the pipeline run
 class PipelineRun:
@@ -45,17 +63,7 @@ def run_pipeline_variant(
     overlap: int
 ) -> PipelineRun:
     """Run a specific variant of the pipeline and collect statistics"""
-    db_embedding_map = {
-        "chroma": "mxbai-embed-large",
-        "redis": "nomic-embed-large",
-        "pinecone": "sentence-transformer"
-    }
-    
-    db_upload_map = {
-        "chroma": perform_upload_chroma,
-        "redis": perform_upload_redis,
-        "pinecone": perform_upload_pinecone
-    }
+
     
     result = PipelineRun(
         embedding_model=db_embedding_map[database],
@@ -104,11 +112,12 @@ chunk_sizes = [100, 500]
 overlaps = [0, 100]
 
 # Run experiments with different configurations
-for question in questions:
-    for llm in llm_models:
-        for db in databases:
-            for chunk_size in chunk_sizes:
-                for overlap in overlaps:
+
+for llm in llm_models:
+    for db in databases:
+        for chunk_size in chunk_sizes:
+            for overlap in overlaps:
+                for question in questions:
                     run = run_pipeline_variant(
                         path=directory_path,
                         question=question,
@@ -118,6 +127,9 @@ for question in questions:
                         overlap=overlap
                     )
                     results.append(run)
-
+                # Delete pinecone index after each overlap switch
+                
+            # Delete pinecone index after each chunk size switch
+            
 # Save results for analysis
 # TODO: Implement saving results to CSV/JSON

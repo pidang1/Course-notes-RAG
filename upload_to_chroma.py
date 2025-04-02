@@ -50,6 +50,7 @@ def process_documents(directory_path: str, chunk_size: int = 500, overlap: int =
     return embeddings, all_chunks, embed_time
 
 def perform_upload_chroma(path: str, chunk_size: int, overlap: int):
+    
     print(f"Processing documents from {path}")
     
     # Process documents (load, chunk, embed)

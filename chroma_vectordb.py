@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 import chromadb
 from embed import MxbaiEmbedder
+from uuid import uuid4
 
 
 # Load environment variables
@@ -21,7 +22,6 @@ def initialize_chroma():
     # Get or create collection
     # Initialize Chroma client
     client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
-    
     try:
         # Try to get existing collection
         collection = client.get_collection(COLLECTION_NAME)
@@ -47,7 +47,7 @@ def upload_embeddings_to_chroma(
     print(f"Uploading {total_vectors} vectors to Chroma...")
     
     # Prepare data for Chroma
-    ids = [f"doc_{i}" for i in range(total_vectors)]
+    ids = [f"doc_{uuid4}" for i in range(total_vectors)]
     emb_lists = [emb.tolist() for emb in embeddings]
     
     # Add to collection
