@@ -40,18 +40,15 @@ def initialize_redis_index(embedding_dimension: int = 768):
                     },
                 ),
                 redis.commands.search.field.TextField("text"),
-                redis.commands.search.field.TextField("source"),
-                redis.commands.search.field.TextField("category")
             ]
         )
         print(f"Index {INDEX_NAME} created successfully.")
-    
     return redis_client
 
 def upload_embeddings_to_redis(
     client,
     embeddings: List[np.ndarray],
-    documents: List[Dict[str, Any]]
+    documents: List[str]
 ):
     """Upload embeddings to Redis vector database."""
     total_vectors = len(embeddings)
@@ -63,13 +60,11 @@ def upload_embeddings_to_redis(
         vector_id = f"doc_{i}"
         embedding = embeddings[i].astype(np.float32)
         
-        # Prepare metadata from document
-        metadata = documents[i]
-        mapping = {"embedding": embedding.tobytes()}
-        mapping.update(metadata)
-        
-        # Store vector with metadata
-        pipeline.hset(vector_id, mapping=mapping)
+        # Store vector with text only
+        pipeline.hset(vector_id, mapping={
+            "embedding": embedding.tobytes(),
+            "text": documents[i] 
+        })
     
     pipeline.execute()
     print(f"Successfully uploaded {total_vectors} vectors to Redis.")
@@ -121,33 +116,25 @@ def main():
     
     client = initialize_redis_index(embedding_dimension=embedder.get_embedding_dimension())
     
-    # # Sample data
-    # sample_texts = [
-    #     "Sample document 1",
-    #     "Sample document 2",
-    #     "Sample document 3",
-    #     "Sample document 4",
-    #     "Sample document 5"
-    # ]
+    # Sample data
+    sample_texts = [
+        "redis was found in 2009",
+        "Sample document 2",
+        "Sample document 3",
+        "Sample document 4",
+        "Sample document 5"
+    ]
     
-    # # Generate embeddings
-    # sample_embeddings = embedder.embed_chunks(sample_texts)
+    # Generate embeddings
+    sample_embeddings = embedder.embed_chunks(sample_texts)
     
-    # # Create documents
-    # sample_documents = [
-    #     {"text": "Sample document 1", "source": "source1", "category": "category1"},
-    #     {"text": "Sample document 2", "source": "source1", "category": "category2"},
-    #     {"text": "Sample document 3", "source": "source2", "category": "category1"},
-    #     {"text": "Sample document 4", "source": "source2", "category": "category2"},
-    #     {"text": "Sample document 5", "source": "source3", "category": "category3"},
-    # ]
     
-    # # Upload embeddings to Redis
-    # upload_embeddings_to_redis(client, sample_embeddings, sample_documents)
+    # Upload embeddings to Redis
+    upload_embeddings_to_redis(client, sample_embeddings, sample_texts)
     
-    # # Query example
-    # result = query(client, "test query")
-    # print("\nQuery result:", result)
+    # Query example
+    result = query(client, "when was redis found?", top_k=1)
+    print("\nQuery result:", result)
 
 if __name__ == "__main__":
     main()
