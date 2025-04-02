@@ -3,14 +3,12 @@ import sys
 from typing import List, Dict, Any
 import numpy as np
 from document_loader import load_documents
-from embed import SentenceTransformerEmbedder
-from pinecone_vectordb import initialize_pinecone, upload_embeddings_to_pinecone
+from embed import MxbaiEmbedder
+from chroma_vectordb import initialize_chroma, upload_embeddings_to_chroma
 from chunking import chunk_text
 import time
 
-# filepath: c:\Users\daoho\Desktop\Progamming\Course-notes-RAG\main.py
-
-def perform_upload_pinecone(directory_path: str, chunk_size: int = 500, overlap: int = 100) -> tuple:
+def process_documents(directory_path: str, chunk_size: int = 500, overlap: int = 100) -> tuple:
     """Process documents from a directory, create chunks, and embed them."""
     # Load documents
     documents = load_documents(directory_path)
@@ -20,10 +18,9 @@ def perform_upload_pinecone(directory_path: str, chunk_size: int = 500, overlap:
         return [], []
     
     # Initialize embedder
-    embedder = SentenceTransformerEmbedder()
+    embedder = MxbaiEmbedder()
     
     all_chunks = []
-    all_metadata = []
     
     # Process each document
     for filename, pages in documents.items():
@@ -38,27 +35,19 @@ def perform_upload_pinecone(directory_path: str, chunk_size: int = 500, overlap:
         chunks = chunk_text(complete_text, chunk_size, overlap)
         print(f"Created {len(chunks)} chunks from {filename}")
         
-        # Create metadata for each chunk
-        metadata_list = [
-            {
-                "source": filename,
-                "text": chunk 
-            }
-            for chunk in chunks
-        ]
+        
         
         # Add to master lists
         all_chunks.extend(chunks)
-        all_metadata.extend(metadata_list)
     
     # Embed all chunks
     print(f"Embedding {len(all_chunks)} chunks...")
     embeddings = embedder.embed_chunks(all_chunks)
     print(f"Successfully embedded {len(embeddings)} chunks")
     
-    return embeddings, all_metadata
+    return embeddings, all_chunks
 
-def performUpload(path: str, chunk_size: int, overlap: int):
+def perform_upload_chroma(path: str, chunk_size: int, overlap: int):
     print(f"Processing documents from {path}")
     
     # Process documents (load, chunk, embed)
@@ -70,8 +59,8 @@ def performUpload(path: str, chunk_size: int, overlap: int):
     
     # Upload to Redis
     upload_start_time = time.time()
-    index = initialize_pinecone()
-    upload_embeddings_to_pinecone(index, embeddings, metadata)
+    index = initialize_chroma()
+    upload_embeddings_to_chroma(index, embeddings, metadata)
     upload_time = time.time() - upload_start_time
     print("Process completed successfully!")
     
@@ -87,7 +76,7 @@ def performUpload(path: str, chunk_size: int, overlap: int):
 def main():
     if len(sys.argv) < 2:
         print("Please provide a directory path containing PDF documents")
-        print("Usage: python main.py <directory_path>")
+        print("Usage: python upload_to_chroma.py <directory_path>")
         return
     
     directory_path = sys.argv[1]
@@ -105,9 +94,10 @@ def main():
         print("No embeddings were generated. Exiting...")
         return
     
-    # Upload to Pinecone
-    index = initialize_pinecone()
-    upload_embeddings_to_pinecone(index, embeddings, metadata)
+    # Upload to Redis
+    index = initialize_chroma()
+    print("metadata[0]:", metadata[0])
+    upload_embeddings_to_chroma(index, embeddings, metadata)
     print("Process completed successfully!")
     return index
 

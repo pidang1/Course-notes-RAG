@@ -46,17 +46,11 @@ def upload_embeddings_to_chroma(
     total_vectors = len(embeddings)
     print(f"Uploading {total_vectors} vectors to Chroma...")
     
-    print(f"First embedding type: {type(embeddings[0])}")
-    print(f"First embedding shape: {embeddings[0].shape if hasattr(embeddings[0], 'shape') else 'No shape attribute'}")
-    print(f"First few values: {embeddings[0][:5] if hasattr(embeddings[0], '__getitem__') else 'Cannot slice'}")
-    
     # Prepare data for Chroma
     ids = [f"doc_{i}" for i in range(total_vectors)]
     emb_lists = [emb.tolist() for emb in embeddings]
-    print("IDs prepared...")
     
     # Add to collection
-    print("About to add to collection...")
     collection.add(
         ids=ids,
         embeddings=emb_lists,
