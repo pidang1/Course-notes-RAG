@@ -117,8 +117,7 @@ if not os.path.isdir(directory_path):
 # Configuration variants to test
 llama = LLM("llama3.2")
 mistral = LLM("mistral")
-embedding_models = ["sentence_transformer", "nomic", "mxbai"]
-databases = ["chroma", "redis", "pinecone"]
+databases = ["pinecone", "chroma", "redis"]
 llm_models = [llama, mistral]
 prompts = [
     """Synthesize the information across these documents to provide a comprehensive answer. 
@@ -158,11 +157,13 @@ for llm in llm_models:
                         )
                         results.append(run)
                     # Delete pinecone index after each overlap switch
+                    if db == "pinecone":
+                        index = initialize_pinecone()
+                        clear_pinecone_index(index)
+                # Delete pinecone index after each chunk size switch
+                if db == "pinecone":
                     index = initialize_pinecone()
                     clear_pinecone_index(index)
-                # Delete pinecone index after each chunk size switch
-                index = initialize_pinecone()
-                clear_pinecone_index(index)
 # Write results out into CSV
 
 csv_path = f"./experiment_results.csv"
