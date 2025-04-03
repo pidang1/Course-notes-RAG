@@ -11,14 +11,11 @@ import sys
 import os
 import csv
 from datetime import datetime
-
+import psutil
 
 questions = [
     "How many databases can Redis have?",
     "What is the purpose of logical replication (row based) in databases, and how is it different from statement-based replication?",
-    "Describe the CAP Theorem and how many can it simultaneously provide?",
-    "Compare the use cases for Redis lists vs. Redis sets.",
-    "What is the purpose of logical replication (row based) in databases, and how is it different from statement-based replication?"
 ]
 
 db_embedding_map = {
@@ -53,6 +50,7 @@ class PipelineRun:
     # Results
     num_chunks: int = 0
     answer: str = ""
+    memory_usage: float = 0.0  # Memory usage in MB
     score: Optional[float] = None  # For manual qualitative evaluation later
     
 
@@ -63,10 +61,10 @@ def run_pipeline_variant(
     database: str,
     chunk_size: int,
     overlap: int,
-    prompt: str
-) -> PipelineRun:
+    prompt: str,
+    ) -> PipelineRun:
     """Run a specific variant of the pipeline and collect statistics"""
-
+    
     
     result = PipelineRun(
         embedding_model=db_embedding_map[database],
@@ -80,20 +78,37 @@ def run_pipeline_variant(
     # Retrieve the appropriate upload function based on the database
     db_upload_func = db_upload_map[database]
     
+    # Measure memory usage before execution
+    process = psutil.Process(os.getpid()) 
+    mem_before = process.memory_info().rss / (1024 * 1024)
+    
     # Embed the dataset and retrieve statistics
     index, statistics = db_upload_func(path, chunk_size, overlap)
+    
+    # Measure memory usage after embedding
+    mem_after_embedding = process.memory_info().rss / (1024 * 1024)
+    
     
     # Store the statistics in the result object
     result.embedding_time = statistics["embed_time"]
     result.upload_time = statistics["upload_time"]
     result.num_chunks = statistics["chunk_count"]
     
+    # Measure memory usage before query
+    mem_before_query = process.memory_info().rss / (1024 * 1024)
+    
     query_start_time = time.time()
     answer = query_question(database, index, question, llm_model, prompt)
     query_time = time.time() - query_start_time
     
+    # Measure memory usage after query
+    mem_after_query = process.memory_info().rss / (1024 * 1024)
+    
     result.query_time = query_time
     result.answer = answer
+    
+    # Calculate peak memory usage during the run
+    result.memory_usage = max(mem_after_embedding, mem_after_query) - mem_before
     
     print(result)
     
@@ -117,45 +132,92 @@ if not os.path.isdir(directory_path):
 # Configuration variants to test
 llama = LLM("llama3.2")
 mistral = LLM("mistral")
-databases = ["pinecone", "chroma", "redis"]
+databases = ["chroma", "redis", "pinecone"]
 llm_models = [llama, mistral]
 prompts = [
     """Synthesize the information across these documents to provide a comprehensive answer. 
-    Highlight areas where sources agree or disagree, and explain the significance of these patterns 
-    given the following context:
     
     Review the following retrieved passages and determine which are relevant to answering: \"{user_query}\"\n\n
-    {retrieved_passage}\n\n
-    For each relevant passage, explain why it contains useful information. 
-    Then provide a comprehensive answer using only the relevant information.""",
+    {retrieved_passage}\n""",
     """
     You have retrieved multiple documents related to: "{user_query}"
 
     {retrieved_passage}
 
-    Synthesize the information across these documents to provide a comprehensive answer. Highlight areas where sources agree or disagree, and explain the significance of these patterns.
+    Return the answer to the question if only the retrieved passages are relevant, else return "I don't know".
     """]
-chunk_sizes = [100, 500]
+chunk_sizes = [200, 500]
 overlaps = [0, 100]
 
-# Run experiments with different configurations
+# Write results out into CSV
+def write_results_to_csv(results, csv_path, append=False):
+    """Write results to CSV file, either creating a new file or appending to existing one"""
+    # Define CSV headers based on PipelineRun fields
+    headers = [
+        "embedding_model", "database", "llm_model", "chunk_size", "overlap", 
+        "question", "embedding_time", "upload_time", "query_time", 
+        "num_chunks", "answer", "memory_usage", "score", 
+    ]
+    
+    # Open file in append mode if append=True and file exists, otherwise write mode
+    mode = 'a' if append and os.path.exists(csv_path) else 'w'
+    
+    # Write results to CSV
+    with open(csv_path, mode, newline='', encoding='utf-8') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=headers)
+        
+        # Write header only if we're creating a new file
+        if mode == 'w':
+            writer.writeheader()
+        
+        for result in results:
+            # Convert the result to a dictionary
+            result_dict = {
+                "embedding_model": result.embedding_model,
+                "database": result.database,
+                "llm_model": result.llm_model.model_name if hasattr(result.llm_model, 'model_name') else str(result.llm_model),
+                "chunk_size": result.chunk_size,
+                "overlap": result.overlap,
+                "question": result.question,
+                "embedding_time": result.embedding_time,
+                "upload_time": result.upload_time,
+                "query_time": result.query_time,
+                "num_chunks": result.num_chunks,
+                "answer": result.answer,
+                "memory_usage": result.memory_usage if result.memory_usage is not None else "",
+                "score": result.score if result.score is not None else ""
+            }
+            writer.writerow(result_dict)
+    
+    print(f"Results written to {csv_path}")
 
-for llm in llm_models:
-    for db in databases:
+csv_path = "./experiment_results.csv"
+
+# Run experiments with different configurations
+for db in databases:
+    db_results = []
+    for llm in llm_models:
         for chunk_size in chunk_sizes:
             for overlap in overlaps:
                 for prompt in prompts:
                     for question in questions:
-                        run = run_pipeline_variant(
-                            path=directory_path,
-                            question=question,
-                            llm_model=llm,
-                            database=db,
-                            chunk_size=chunk_size,
-                            overlap=overlap,
-                            prompt=prompt
-                        )
-                        results.append(run)
+                        try:
+                            # Record memory usage before the run
+                            
+                            run = run_pipeline_variant(
+                                path=directory_path,
+                                question=question,
+                                llm_model=llm,
+                                database=db,
+                                chunk_size=chunk_size,
+                                overlap=overlap,
+                                prompt=prompt
+                            )
+                            
+                            db_results.append(run)
+                        except Exception as e:
+                            print(f"Error running experiment with {db}, {llm.model_name}, chunk_size={chunk_size}, overlap={overlap}: {e}")
+                            continue
                     # Delete pinecone index after each overlap switch
                     if db == "pinecone":
                         index = initialize_pinecone()
@@ -164,40 +226,15 @@ for llm in llm_models:
                 if db == "pinecone":
                     index = initialize_pinecone()
                     clear_pinecone_index(index)
-# Write results out into CSV
-
-csv_path = f"./experiment_results.csv"
-
-# Define CSV headers based on PipelineRun fields
-headers = [
-    "embedding_model", "database", "llm_model", "chunk_size", "overlap", 
-    "question", "embedding_time", "upload_time", "query_time", 
-    "num_chunks", "answer", "score"
-]
-
-# Write results to CSV
-with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=headers)
-    writer.writeheader()
+    # Write results for this database to CSV
+    print(f"Writing results for database: {db}")
+    # For the first database, create a new file; for others, append
+    append_mode = db != databases[0]
+    write_results_to_csv(db_results, csv_path, append=append_mode)
     
-    for result in results:
-        # Convert the result to a dictionary
-        result_dict = {
-            "embedding_model": result.embedding_model,
-            "database": result.database,
-            "llm_model": result.llm_model.model_name if hasattr(result.llm_model, 'model_name') else str(result.llm_model),
-            "chunk_size": result.chunk_size,
-            "overlap": result.overlap,
-            "question": result.question,
-            "embedding_time": result.embedding_time,
-            "upload_time": result.upload_time,
-            "query_time": result.query_time,
-            "num_chunks": result.num_chunks,
-            "answer": result.answer,
-            "score": result.score if result.score is not None else ""
-        }
-        writer.writerow(result_dict)
+    print(f"Completed experiments for database: {db}")
+    
+    
 
-print(f"Results written to {csv_path}")
 
 

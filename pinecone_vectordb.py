@@ -75,7 +75,7 @@ def query_pinecone(index, query: str, top_k=1):
         # Embed the user query
         embedder = SentenceTransformerEmbedder()
         query_embedding = embedder.embed_chunks([query])[0].tolist()
-        print(f"Query embedding: {query_embedding}")
+        # print(f"Query embedding: {query_embedding}")
         
         # Search Pinecone for relevant context
         search_results = index.query(

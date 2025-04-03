@@ -14,3 +14,5 @@ huggingface_hub
 llama-index
 chromadb==0.5.3
 onnxruntime==1.15.0
+psutil
+memory_profiler
