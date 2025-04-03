@@ -61,3 +61,12 @@ ollama pull nomic-embed-text
 | upload_to_chroma.py | file that contains the script to upload given files/data to the ChromaDB  | 
 | upload_to_pinecone.py | file that contains the script to upload given files/data to the pinecone database |
 | visualization.ipynb | Jupyter notebook file that contains python code to graph our findings |  
+
+# How to run the experiment:
+1. Ensure all dependencies are downloaded to your virtual environment
+2. Ensure that your redis container is set up and running 
+3. Run the experiment.py using
+```
+py experiment.py <PATH_TO_YOUR_FOLDER_CONTAINING_PDF_NOTES>
+```
+4. The results should be written to experiments_results for you to analyze and manually scored
