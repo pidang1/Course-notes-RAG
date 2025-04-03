@@ -43,3 +43,21 @@ ollama pull mxbai-embed-large
 ```
 ollama pull nomic-embed-text
 ```
+
+5. Set up the Redis container using the Redis setup lecture slides.
+
+# File Architecture:
+| File | Utility |
+|------------|---------|
+| llm_models/llama.py | hosts the LLM class for LLM initialization |
+| chroma_vectordb.py | contains the class and methods associated with chromaDB |
+| pinecone_vectordb.py | contains the class and methods associated with Pinecone |
+| redis_vectordb.py | contains the class and methods associated with Redis VectorDB |
+| chunking.py | chunks a given text by chunk size and overlap | 
+| embed.py | contains the various embedding model classes and their functions | 
+| experiment.py | script to run the experiment and write the results to experiment_results.csv | 
+| search_function | a basic search function for the user to interact with the architecture (defaulting to Pinecone + Sentence Transformer) | 
+| upload_to_Redis.py | file that contains the script to upload given files/data to the Redis database | 
+| upload_to_chroma.py | file that contains the script to upload given files/data to the ChromaDB  | 
+| upload_to_pinecone.py | file that contains the script to upload given files/data to the pinecone database |
+| visualization.ipynb | Jupyter notebook file that contains python code to graph our findings |  

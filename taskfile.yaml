@@ -1,7 +1,0 @@
-version: "3"
-
-tasks:
-  redis:
-    summary: Runs the experiement with redis vector DB as our storage
-    cmds:
-      - python main.py --redis
